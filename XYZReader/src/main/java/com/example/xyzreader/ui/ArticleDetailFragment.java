@@ -16,14 +16,22 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.GregorianCalendar;
 
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.design.widget.CollapsingToolbarLayout;
+import android.support.v4.app.NavUtils;
 import android.support.v4.app.ShareCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBar;
 import android.support.v7.graphics.Palette;
+import android.support.v7.widget.Toolbar;
 import android.text.Html;
 import android.text.format.DateUtils;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -31,6 +39,12 @@ import android.widget.TextView;
 
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageLoader;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.example.xyzreader.R;
 import com.example.xyzreader.data.ArticleLoader;
 
@@ -96,6 +110,8 @@ public class ArticleDetailFragment extends Fragment implements
         setHasOptionsMenu(true);
     }
 
+
+
     public ArticleDetailActivity getActivityCast() {
         return (ArticleDetailActivity) getActivity();
     }
@@ -110,6 +126,7 @@ public class ArticleDetailFragment extends Fragment implements
         // we do this in onActivityCreated.
         getLoaderManager().initLoader(0, null, this);
     }
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -128,15 +145,13 @@ public class ArticleDetailFragment extends Fragment implements
         mScrollView.setCallbacks(new ObservableScrollView.Callbacks() {
             @Override
             public void onScrollChanged() {
-                mScrollY = mScrollView.getScrollY();
-                getActivityCast().onUpButtonFloorChanged(mItemId, ArticleDetailFragment.this);
-                mPhotoContainerView.setTranslationY((int) (mScrollY - mScrollY / PARALLAX_FACTOR));
+                //mPhotoContainerView.setTranslationY((int) (mScrollY - mScrollY / PARALLAX_FACTOR));
                 updateStatusBar();
             }
         });
 
         mPhotoView = (ImageView) mRootView.findViewById(R.id.photo);
-        mPhotoContainerView = mRootView.findViewById(R.id.photo_container);
+        //mPhotoContainerView = mRootView.findViewById(R.id.photo_container);
 
         mStatusBarColorDrawable = new ColorDrawable(0);
 
@@ -195,6 +210,24 @@ public class ArticleDetailFragment extends Fragment implements
         }
     }
 
+
+
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        Toolbar toolbar = (Toolbar) mRootView.findViewById(R.id.toolbar);
+        getActivityCast().setSupportActionBar(toolbar);
+        ActionBar actionBar = getActivityCast().getSupportActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
+        actionBar.setDisplayShowHomeEnabled(true);
+
+        actionBar.setTitle(R.string.app_name);
+        CollapsingToolbarLayout toolbarWrapper = (CollapsingToolbarLayout) mRootView.findViewById(R.id.main_collapsing) ;
+
+        toolbarWrapper.setExpandedTitleColor(Color.TRANSPARENT);
+        toolbarWrapper.setCollapsedTitleTextColor(Color.WHITE);
+    }
+
     private void bindViews() {
         if (mRootView == null) {
             return;
@@ -233,7 +266,17 @@ public class ArticleDetailFragment extends Fragment implements
 
             }
             bodyView.setText(Html.fromHtml(mCursor.getString(ArticleLoader.Query.BODY).replaceAll("(\r\n|\n)", "<br />")));
-            ImageLoaderHelper.getInstance(getActivity()).getImageLoader()
+
+
+            Glide.with(getActivityCast())
+                    .load(mCursor.getString(ArticleLoader.Query.PHOTO_URL))
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .override(mPhotoView.getHeight(),mPhotoView.getWidth())
+                    .into(mPhotoView);
+
+
+
+            /*ImageLoaderHelper.getInstance(getActivity()).getImageLoader()
                     .get(mCursor.getString(ArticleLoader.Query.PHOTO_URL), new ImageLoader.ImageListener() {
                         @Override
                         public void onResponse(ImageLoader.ImageContainer imageContainer, boolean b) {
@@ -252,7 +295,7 @@ public class ArticleDetailFragment extends Fragment implements
                         public void onErrorResponse(VolleyError volleyError) {
 
                         }
-                    });
+                    });*/
         } else {
             mRootView.setVisibility(View.GONE);
             titleView.setText("N/A");
